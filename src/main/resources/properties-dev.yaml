@@ -1,0 +1,8 @@
+json.logger:
+  application:
+    name: "micorp-salesforce-system-api"
+    version: "v1" 
+
+Listener:
+  host: "0.0.0.0"
+  port: "8081"
