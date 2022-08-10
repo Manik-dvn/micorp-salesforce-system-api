@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+     <flow name="Micorp-Salesforce-Sys-Api-main">
+        <http:listener config-ref="Micorp-Salesforce-Sys-Api-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="Micorp-Salesforce-Sys-Api-config" />
+		<error-handler ref="error-handler-global" />
+    </flow>
+    <flow name="Micorp-Salesforce-Sys-Api-console">
+        <http:listener config-ref="Micorp-Salesforce-Sys-Api-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="Micorp-Salesforce-Sys-Api-config" />
+		<error-handler ref="error-handler-global" />
+    </flow>
+    <flow name="get:\customer:Micorp-Salesforce-Sys-Api-config">
+        <flow-ref doc:name="get-customer" doc:id="f5117041-f10f-4dad-abe4-8c79002aa5f9" name="get-customer-subflow"/>
+    </flow>
+    <flow name="get:\item:Micorp-Salesforce-Sys-Api-config">
+        <flow-ref doc:name="get-item" doc:id="518734b0-df68-49fe-8d0d-31237c454bb0" name="get-item-subflow"/>
+    </flow>
+    <flow name="get:\order:application\json:Micorp-Salesforce-Sys-Api-config">
+        <flow-ref doc:name="get-order" doc:id="3250be70-b15b-401e-9771-a9b2a152eaa6" name="get-order-subflow"/>
+    </flow>
+	<flow name="post:\customer:application\json:Micorp-Salesforce-Sys-Api-config">
+        <flow-ref doc:name="post-customer" doc:id="6b376c2e-1951-4b4c-95b6-4c8bd45fe657" name="post-customer-subflow"/>
+		<choice doc:name="Choice" doc:id="fd410d8d-6d64-449d-877b-c5a9f6003fe5" >
+			<when expression="#[(payload.successful)==true]">
+				<ee:transform doc:name="Transform Message" doc:id="054587dd-ae3e-4ce3-88cc-70b5ec10201e" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "Customer Successfully Created",
+	"ItemId": payload.items.id[0]
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<raise-error doc:name="Raise error" doc:id="25988801-570a-4ce3-9dbe-e96764c5416b" type="CUSTOMER:DUPLICATE_CUSTOMER" description="#[payload.items.exception.message[0]]"/>
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="08d5bc3d-0f7c-42e4-a78f-e583bf3d6bbb" >
+				<ee:transform doc:name="Transform Message" doc:id="e36f1577-6199-4101-8c08-6da9ddc0cd49" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"error-message": payload.items.exception.message[0]
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+    </flow>
+    <flow name="post:\item:application\json:Micorp-Salesforce-Sys-Api-config">
+        <flow-ref doc:name="post-item" doc:id="a0c519a8-66ff-40b6-8e4f-05601caf5072" name="post-item-subflow"/>
+		<choice doc:name="Choice" doc:id="fd82ac12-b72e-469d-a119-9710f57145fe" >
+			<when expression="#[(payload.successful)==true]">
+				<ee:transform doc:name="Transform Message" doc:id="9bb3cddf-e477-41d9-a981-fd58a7a4ebf3" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "Item Successfully Created",
+	"itemId": payload.items.id[0]
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<raise-error doc:name="Raise error" doc:id="32dc3b95-9739-4cf6-9114-a935cae61517" type="ITEM:ALREADY_CREATED" description="#[payload.items.exception.message[0]]"/>
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="62d966af-b944-467f-bebd-545476aa766f" >
+				<ee:transform doc:name="Transform Message" doc:id="85fc8789-94c9-43e5-a880-fffe37847091" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"error-message": payload.items.exception.message[0]
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+    </flow>
+    <flow name="post:\order:application\json:Micorp-Salesforce-Sys-Api-config">
+        <flow-ref doc:name="post-order" doc:id="5672d6c0-2bea-4563-9823-766db8674496" name="post-order-subflow"/>
+		<choice doc:name="Choice" doc:id="f41f7307-bf55-48c3-afbc-1d7b7ab77119" >
+			<when expression="#[(payload.successful)==true]">
+				<ee:transform doc:name="Transform Message" doc:id="44dc7c79-85c0-4659-8ec2-73514b8de409" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "Order Successfully Created",
+	"orderId": payload.items.id[0]
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<raise-error doc:name="Raise error" doc:id="62818898-5055-4393-baab-688afd5379fc" type="ORDER:DUPLICATE_ID" description="#[payload.items.exception.message[0]]"/>
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="9ec7f90f-d680-4587-abd8-03e8d005c40e" >
+				<ee:transform doc:name="Transform Message" doc:id="f64cccc0-da8e-40a4-955e-0f9845b63bef" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"error-message": payload.items.exception.message[0]
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+    </flow>
+</mule>

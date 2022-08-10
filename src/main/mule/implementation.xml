@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd">
+	<sub-flow name="post-customer-subflow" doc:id="9cea7c8e-1415-4c3f-a481-983c9b2c6340" >
+		<json-logger:logger doc:name="Start flow for post-Customer" doc:id="54b66efb-7371-41ec-ba2f-e19c2d060512" config-ref="JSON_Logger_Config" message="Start flow for post-Customer" />
+		<ee:transform doc:name="Mapping of customer detail" doc:id="7b21fb26-9cf8-4b20-90e0-9ac4405f483a" >
+			<ee:message >
+				<ee:set-payload resource="post-customer.dwl" />
+			</ee:message>
+		</ee:transform>
+		<salesforce:create doc:name="Posting the data of customer " doc:id="e788ab79-e25a-478d-b24e-ada751dbfd01" config-ref="Salesforce_Config" type="customer__c">
+		</salesforce:create>
+		<ee:transform doc:name="Payload of customer data" doc:id="8ade681b-6018-463a-abc4-9cb67b6b11ee">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<json-logger:logger doc:name="End-Flow of post-customer" doc:id="7db2d9ba-2299-49db-b1d9-50f6b79de91c" config-ref="JSON_Logger_Config" message="End-Flow of post-customer" tracePoint="END" />
+	</sub-flow>
+	<sub-flow name="post-item-subflow" doc:id="5fa23404-947c-473c-ac9e-d8467348e65a" >
+		<json-logger:logger doc:name="Start Flow of post-item" doc:id="fe55833e-4d42-49da-ae03-59a1937c13ab" config-ref="JSON_Logger_Config" message="Start Flow of post-item" />
+		<ee:transform doc:name="Mapping of item data" doc:id="753af912-c8c7-4811-8d96-45935fb0c44c" >
+			<ee:message >
+				<ee:set-payload resource="post-item.dwl" />
+			</ee:message>
+		</ee:transform>
+		<salesforce:create type="item__c" doc:name="Posting the detail of item" doc:id="e1194a9c-04f5-4adf-ba3c-333ae31d510d" config-ref="Salesforce_Config">
+		</salesforce:create>
+		<ee:transform doc:name="Payload of item data" doc:id="3112bb76-59c6-40b3-abea-4d4683099cce">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<json-logger:logger doc:name="End flow of post-item" doc:id="949a68e2-92e6-4220-b4fe-1eae769610e5" config-ref="JSON_Logger_Config" message="End flow of post-item" tracePoint="END" />
+	</sub-flow>
+	<sub-flow name="get-item-subflow" doc:id="409ae899-5c76-405a-ad89-039931df737d" >
+		<json-logger:logger doc:name="Start flow of get-item" doc:id="a78a2b83-3dcb-454a-a04f-607e3b2421c7" config-ref="JSON_Logger_Config" message="Start flow of get-item" />
+		<ee:transform doc:name="Query of selecting item detail)" doc:id="d8976103-6257-4e4a-a8b8-a1ed02ce3ff6">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+"SELECT FIELDS(ALL) FROM item__c where Orderr__c = '" ++ attributes.queryParams.'orderId' ++ "' LIMIT 200"]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:query doc:name="Getting item detail" doc:id="fd057873-eb5b-4b80-9fb0-9f7f9dde6ae7" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query><![CDATA[#[payload]]]></salesforce:salesforce-query>
+		</salesforce:query>
+		<ee:transform doc:name="Payload(item data)" doc:id="1c9ac149-6d90-497d-84f9-a9486bb0cebb">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload[0]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<json-logger:logger doc:name="End flow of get-item " doc:id="c65c9aea-0de9-44a1-94ab-5ae9e7347f38" config-ref="JSON_Logger_Config" tracePoint="END" message="End flow of get-item " />
+	</sub-flow>
+	<sub-flow name="get-customer-subflow" doc:id="5e5fd67a-596b-4e76-8826-c355fb08dc6d" >
+		<json-logger:logger doc:name="Start flow of get customer" doc:id="05d21bed-db1b-4096-9c5e-aff6ad568959" config-ref="JSON_Logger_Config" message="Start flow of get customer" />
+		<ee:transform doc:name="Transform Message(query of selecting customer data)" doc:id="ab1459d0-fa7f-49b5-b333-3805d7628869">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+"SELECT FIELDS(ALL) FROM customer__c where Orderr__c = '" ++ attributes.queryParams.'orderId' ++ "' LIMIT 200"]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+			</ee:variables>
+		</ee:transform>
+		<salesforce:query doc:name="Query(getting payload of customer detail)" doc:id="aa1b804b-f2e5-4a2a-b393-6fd98f324530" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query><![CDATA[#[payload]]]></salesforce:salesforce-query>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Message(Payload of customer)" doc:id="94530714-9828-4c70-955c-246fb93eca53">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload[0]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<json-logger:logger doc:name="End flow of get customer" doc:id="ee12029c-24af-40b1-ba1b-d366d5de1ab7" config-ref="JSON_Logger_Config" message="End flow of get customer" tracePoint="END" />
+	</sub-flow>
+	<sub-flow name="get-order-subflow" doc:id="e435ad89-4ceb-4d7c-9916-26c7fee82ef1" >
+		<json-logger:logger doc:name="Start flow of get order " doc:id="c795d646-1ff2-42bb-b65e-e5bc532e795d" config-ref="JSON_Logger_Config" message="Start flow of get order " />
+		<ee:transform doc:name="query of selecting order detail" doc:id="c0640a0c-3de9-438b-b476-1ed23435b68c">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+"SELECT FIELDS(ALL) FROM orderr__c where poNumber__c = " ++ attributes.queryParams.'poNumber' ++ " LIMIT 200"]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:query doc:name="Query(getting detail of order data)" doc:id="7fef6830-c7ec-4a4f-8f6b-8b1425fbcf97" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query><![CDATA[#[payload]]]></salesforce:salesforce-query>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Message(payload of order data)" doc:id="c628e3f2-7bd0-446a-b85c-2e403748b025">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload[0]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<json-logger:logger doc:name="End flow of get order" doc:id="470d98bc-df7d-447b-96ac-bd037bf631d9" config-ref="JSON_Logger_Config" message="End flow of get order" tracePoint="END" />
+	</sub-flow>
+	<sub-flow name="post-order-subflow" doc:id="4d21f6c5-dfed-49e1-8051-bffebc651b5c" >
+		<json-logger:logger doc:name="Start flow of post-order" doc:id="95bd92f6-1564-4209-8249-6ba2ddc89dce" config-ref="JSON_Logger_Config" message="Start flow of post-order" />
+		<ee:transform doc:name="mapping for posting order detail" doc:id="41c0edbf-56ab-4c2b-9744-3ddadcaf76d8" >
+			<ee:message >
+				<ee:set-payload resource="post-order.dwl" />
+			</ee:message>
+		</ee:transform>
+		<salesforce:create doc:name="Create(Posting the detail of order data)" doc:id="6b7698e9-18eb-48e3-b4e6-b36f1d8f7f4c" config-ref="Salesforce_Config" type="Orderr__c">
+		</salesforce:create>
+		<ee:transform doc:name="Transform Message(Payload of order data)" doc:id="a6024ba6-5b38-4f61-a4d2-8bb38faa6e58">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<json-logger:logger doc:name="End flow of post-order" doc:id="eb6469ad-239c-499e-8b43-4ad10baf00ed" config-ref="JSON_Logger_Config" message="End flow of post-order" tracePoint="END" />
+	</sub-flow>
+</mule>
